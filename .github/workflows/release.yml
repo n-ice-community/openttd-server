@@ -31,30 +31,25 @@ jobs:
     with:
       survey_key: ${{ needs.source.outputs.survey_key }}
 
-  upload:
-    name: Upload
+  server-upload-github:
+    name: Release GitHub assets
     needs:
     - source
     - linux
 
+    if: needs.source.outputs.trigger_type == 'new-master' || needs.source.outputs.trigger_type == 'new-tag'
+
     runs-on: ubuntu-latest
 
-    # This job is empty, but ensures no upload job starts before all targets finished and are successful.
     steps:
-    - name: Build completed
-      run: |
-        true
+    - name: Download all bundles
+      uses: actions/download-artifact@v7
 
-  upload-cdn:
-    name: Upload (CDN)
-    needs:
-    - source
-    - upload
+    - name: Release GitHub assets
+      uses: softprops/action-gh-release@v2.5.0
 
-    uses: ./.github/workflows/upload-cdn.yml
-    secrets: inherit
-
-    with:
-      version: ${{ needs.source.outputs.version }}
-      folder: ${{ needs.source.outputs.folder }}
-      trigger_type: ${{ needs.source.outputs.trigger_type }}
+      with:
+        files: |
+          openttd-linux-generic.zip
+          symbols-linux-generic.zip
+          openttd-source.zip
