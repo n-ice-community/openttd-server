@@ -3110,7 +3110,7 @@ static const IntervalTimer<TimerWindow> highlight_interval(TIMER_BLINK_INTERVAL,
 
 /** Blink all windows marked with a white border. */
 static const IntervalTimer<TimerWindow> white_border_interval(std::chrono::milliseconds(30), [](auto) {
-	if (_network_dedicated) return;
+	//if (_network_dedicated) return;
 
 	for (Window *w : Window::Iterate()) {
 		if (w->flags.Test(WindowFlag::WhiteBorder) && --w->white_border_timer == 0) {
@@ -3150,7 +3150,7 @@ void UpdateWindows()
 
 	/* Skip the actual drawing on dedicated servers without screen.
 	 * But still empty the invalidation queues above. */
-	if (_network_dedicated) return;
+	//if (_network_dedicated) return;
 
 	DrawDirtyBlocks();
 
