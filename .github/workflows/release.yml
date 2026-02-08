@@ -50,6 +50,6 @@ jobs:
 
       with:
         files: |
-          openttd-linux-generic.zip
-          symbols-linux-generic.zip
-          openttd-source.zip
+          openttd-linux-generic*/*.zip
+          symbols-linux-generic*/*.zip
+          openttd-source*/*.zip
