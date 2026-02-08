@@ -1,0 +1,84 @@
+name: Upload (CDN)
+
+on:
+  workflow_call:
+    inputs:
+      version:
+        required: true
+        type: string
+      folder:
+        required: true
+        type: string
+      trigger_type:
+        required: true
+        type: string
+
+jobs:
+  prepare:
+    name: Prepare
+
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Download all bundles
+      uses: actions/download-artifact@v6
+
+    - name: Calculate checksums
+      run: |
+        echo "::group::Move bundles to a single folder"
+        mkdir bundles
+        mv openttd-*/* bundles/
+        echo "::endgroup::"
+
+        cd bundles
+        for i in $(ls openttd-*); do
+          echo "::group::Calculating checksums for ${i}"
+          openssl dgst -r -md5 -hex $i > $i.md5sum
+          openssl dgst -r -sha1 -hex $i > $i.sha1sum
+          openssl dgst -r -sha256 -hex $i > $i.sha256sum
+          echo "::endgroup::"
+        done
+
+        # Some targets generate files that are meant for our-eyes-only.
+        # They are stored in the "internal" folder, and contains bundles
+        # for targets like Windows Store. No user has a benefit of knowing
+        # they exist, hence: internal.
+        if [ -e internal ]; then
+          cd internal
+          for i in $(ls openttd-*); do
+            echo "::group::Calculating checksums for ${i}"
+            openssl dgst -r -md5 -hex $i > $i.md5sum
+            openssl dgst -r -sha1 -hex $i > $i.sha1sum
+            openssl dgst -r -sha256 -hex $i > $i.sha256sum
+            echo "::endgroup::"
+          done
+        fi
+
+    - name: Merge symbols
+      run: |
+        mkdir symbols
+        cp -R symbols-*/* symbols/
+
+        # Compress all files as gzip, to reduce cost of storage on the CDN.
+        for i in $(find symbols -mindepth 2 -type f); do
+          gzip ${i}
+        done
+
+        # Leave a mark in each folder what version actually created the symbol file.
+        for i in $(find symbols -mindepth 2 -type d); do
+          touch ${i}/.${{ inputs.version }}.txt
+        done
+
+    - name: Store bundles
+      uses: actions/upload-artifact@v5
+      with:
+        name: cdn-bundles
+        path: bundles/*
+        retention-days: 5
+
+    - name: Store breakpad symbols
+      uses: actions/upload-artifact@v5
+      with:
+        name: cdn-symbols
+        path: symbols/*
+        retention-days: 5

@@ -30,3 +30,31 @@ jobs:
 
     with:
       survey_key: ${{ needs.source.outputs.survey_key }}
+
+  upload:
+    name: Upload
+    needs:
+    - source
+    - linux
+
+    runs-on: ubuntu-latest
+
+    # This job is empty, but ensures no upload job starts before all targets finished and are successful.
+    steps:
+    - name: Build completed
+      run: |
+        true
+
+  upload-cdn:
+    name: Upload (CDN)
+    needs:
+    - source
+    - upload
+
+    uses: ./.github/workflows/upload-cdn.yml
+    secrets: inherit
+
+    with:
+      version: ${{ needs.source.outputs.version }}
+      folder: ${{ needs.source.outputs.folder }}
+      trigger_type: ${{ needs.source.outputs.trigger_type }}
