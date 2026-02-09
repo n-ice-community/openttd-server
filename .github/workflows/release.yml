@@ -50,7 +50,7 @@ jobs:
 
       with:
         files: |
-          *.zip
-          **/*.zip
           openttd-*/*.zip
           openttd-*/*.xz
+          symbols-*/*.xz
+          symbols-*/*.zip
